@@ -1,0 +1,313 @@
+7.1	Xây dựng màn hình Tìm người dùng
+
+Sử dụng api : https://services-uc7i.onrender.com/dsNguoidung
+
+-----------------------------------------------------------
+Trong thư mục actions
+
+ -actionTypes.js
+
+export const DOC_DANH_SACH_NGUOI_DUNG ='DOC_DANH_SACH_NGUOI_DUNG';
+export const DOC_DANH_SACH_NGUOI_DUNG_THANH_CONG ='DOC_DANH_SACH_NGUOI_DUNG_THANH_CONG';
+export const DOC_DANH_SACH_NGUOI_DUNG_THAT_BAI ='DOC_DANH_SACH_NGUOI_DUNG_THAT_BAI';
+
+ - index.js
+
+import {DOC_DANH_SACH_NGUOI_DUNG, DOC_DANH_SACH_NGUOI_DUNG_THANH_CONG, DOC_DANH_SACH_NGUOI_DUNG_THAT_BAI} from './actionTypes';
+
+export const Doc_Danh_sach_Nguoi_dung_Action = (Gia_tri_tim) =>{
+    return {
+        type: DOC_DANH_SACH_NGUOI_DUNG,        
+        Gia_tri_tim:Gia_tri_tim     
+    }
+}
+
+export const Doc_Danh_sach_Nguoi_dung_Thanh_cong_Action = (Danh_sach_Nguoi_dung) =>{
+    return {
+        type: DOC_DANH_SACH_NGUOI_DUNG_THANH_CONG,        
+        Danh_sach_Nguoi_dung: Danh_sach_Nguoi_dung     
+    }
+}
+
+export const Doc_Danh_sach_Nguoi_dung_That_bai_Action = (Loi) =>{
+    return {
+        type: DOC_DANH_SACH_NGUOI_DUNG_THAT_BAI,        
+        Loi: Loi     
+    }
+}
+
+----------------------------------------------------
+Trong thư mục components
+
+ - Tim_Danh_sach_Nguoi_dung_Component.js
+
+import React,{Component} from 'react';
+import {View, Text,Image, FlatList, TextInput, TouchableOpacity, StyleSheet} from 'react-native';
+
+class FlatListItem extends Component{    
+    render(){
+        return(
+            <View style={{flex:1, flexDirection:"column"}}>
+                <View style={{flex:1, flexDirection:"row"}}>
+                    <Image 
+                        style={{height:30,width:30, margin:10, borderRadius:20}} 
+                        source={require('../images/avatar-40.png')}>
+                    </Image>
+                    <View style={{flex:1,justifyContent:'center', height:50}}>
+                        <Text style={styles.itemText}>{this.props.item.Ho_ten}</Text>                        
+                    </View>
+                    <View style={{justifyContent:'center', height:50}}>
+                        <Image 
+                            style={{height:20,width:20, margin:5, tintColor:'#A7A7A7'}} 
+                            source={require('../images/greater-than-50.png')}>      
+                        </Image>   
+                    </View>    
+                </View>
+                <View style={{height:1, backgroundColor:"#e6e5e5"}}></View>
+            </View>
+        );
+    }
+}
+
+export default class Tim_Danh_sach_Nguoi_dung extends Component{   
+    constructor(props){
+        super(props);
+        this.state = {
+            Gia_tri_tim: ''
+        };
+
+    }
+    Tim_Nguoi_dung(){
+        let Gia_tri_tim = this.state.Gia_tri_tim;
+        this.props.onDocDanhSach(Gia_tri_tim);
+    }
+    componentDidMount(){
+        this.props.onDocDanhSach('');
+    }
+    render(){        
+        return (
+            <View>
+                <View style={styles.inputContainer}>
+                    <TextInput 
+                        style={styles.inputs}
+                        placeholder="Nhập họ tên"
+                        value={this.state.Gia_tri_tim}
+                        onChangeText={value => this.setState({Gia_tri_tim: value})}
+                        onSubmitEditing={this.Tim_Nguoi_dung.bind(this)}
+                        placeholderTextColor="#ffffff"
+                    />
+                    <TouchableOpacity onPress={this.Tim_Nguoi_dung.bind(this)} activeOpacity={0.5}>
+                        <Image style={styles.inputIcon} source={require('../images/search.png')}/>
+                    </TouchableOpacity>
+                </View>
+                <FlatList 
+                    data={this.props.Danh_sach} 
+                    keyExtractor={(item) => item.Ma_so} 
+                    renderItem={({item, index})=>{
+                        return(
+                            <FlatListItem item={item} index={index}></FlatListItem>
+                        );
+                    }}>
+                </FlatList>        
+            </View>
+        );
+    }
+}
+
+const styles= StyleSheet.create({
+    itemText:{
+        color:"#000000",
+        padding:5,
+        fontSize:14
+    },
+    inputContainer: {
+        borderColor: '#b9b7b7',
+        backgroundColor: '#4387fd',
+        borderBottomWidth: 1,
+        height:50,
+        flexDirection: 'row',
+        alignItems:'center',               
+    },
+    inputs:{
+        height:40,
+        marginRight:5,
+        borderBottomColor: '#FFFFFF',
+        flex:1,
+        color:'#ffffff',
+        fontSize:14        
+    },
+    inputIcon:{
+        width:26,
+        height:26,
+        tintColor:'#ffffff',
+        marginRight:5,
+        justifyContent: 'center'
+    }
+})
+
+============================================
+
+Trong thư mục containers
+
+ - Tim_Danh_sach_Nguoi_dung_Container.js
+
+import {connect} from 'react-redux';
+import Tim_Danh_sach_Nguoi_dung from '../components/Tim_Danh_sach_Nguoi_dung_Component';
+import {Doc_Danh_sach_Nguoi_dung_Action} from '../actions';
+
+const mapStateToProps = state =>{
+    console.log(state);
+    return {
+        Danh_sach: state.Nguoi_dung_Reducers? state.Nguoi_dung_Reducers:[]
+    }
+}
+const mapDispatchToProps = dispatch =>{
+    return {
+        onDocDanhSach: (Gia_tri_tim)=>{
+            dispatch(Doc_Danh_sach_Nguoi_dung_Action(Gia_tri_tim));
+        }
+    }
+}
+const Tim_Danh_sach_Nguoi_dung_Container= 
+connect(mapStateToProps,mapDispatchToProps)(Tim_Danh_sach_Nguoi_dung);
+export default Tim_Danh_sach_Nguoi_dung_Container;
+
+-----------------------------------------------------
+Trong thư mục reducers
+
+- Nguoi_dung_Reducers.js
+
+import { DOC_DANH_SACH_NGUOI_DUNG, DOC_DANH_SACH_NGUOI_DUNG_THANH_CONG, DOC_DANH_SACH_NGUOI_DUNG_THAT_BAI } from '../actions/actionTypes';
+const Nguoi_dung_Reducers = (Danh_sach_Nguoi_dung = [], action) => {
+    switch (action.type) {
+        case DOC_DANH_SACH_NGUOI_DUNG_THANH_CONG:
+            return action.Danh_sach_Nguoi_dung;
+        case DOC_DANH_SACH_NGUOI_DUNG_THAT_BAI:
+            return [];
+                
+        default:
+            return Danh_sach_Nguoi_dung;
+
+    }
+}
+export default Nguoi_dung_Reducers;
+
+ - index.js
+import {combineReducers} from 'redux'
+import counterReducers from './counterReducers';
+import Nguoi_dung_Reducers from './Nguoi_dung_Reducers'; // add
+
+const allReducers = combineReducers({
+    counterReducers,
+    Nguoi_dung_Reducers // add
+})
+
+export default allReducers;
+ 
+-----------------------------------------------------
+
+Trong thư mục sagas
+
+ - Tạo mới tập tin Api.js
+
+const url_Doc_Danh_sach_Nguoi_dung='https://services-uc7i.onrender.com/dsNguoidung';
+
+
+
+function* Doc_Danh_sach_Nguoi_dung(){
+    const Dap_ung= yield fetch(url_Doc_Danh_sach_Nguoi_dung, {
+        method:'GET',
+        headers:{
+            'Accept':'application/json',
+            'Content-Type':'application/json'
+        },
+        body:'',
+    });    
+   
+    const Ket_qua= yield Dap_ung.status===200? Dap_ung.json(): [];	
+    return Ket_qua;
+}
+
+
+export const Api ={
+    Doc_Danh_sach_Nguoi_dung
+   
+}
+
+- Tạo mới tập tin Nguoi_dung_Saga.js
+
+import { DOC_DANH_SACH_NGUOI_DUNG, DOC_DANH_SACH_NGUOI_DUNG_THANH_CONG, DOC_DANH_SACH_NGUOI_DUNG_THAT_BAI } from '../actions/actionTypes';
+import { put, takeLatest } from 'redux-saga/effects';
+import { Api } from './Api'
+
+export function* Doc_Danh_sach_Nguoi_dung(action) {
+
+    try {
+        const Danh_sach_Nguoi_dung = yield Api.Doc_Danh_sach_Nguoi_dung()
+
+        yield put({
+            type: DOC_DANH_SACH_NGUOI_DUNG_THANH_CONG,
+            Danh_sach_Nguoi_dung:Danh_sach_Nguoi_dung.filter(Nguoi_dung => {
+                return Nguoi_dung.Ho_ten.toLowerCase().includes(action.Gia_tri_tim.toLowerCase())
+            })
+        });
+    }
+    catch (Loi) {
+        yield put({ type: DOC_DANH_SACH_NGUOI_DUNG_THAT_BAI, Loi: Loi });
+    }
+}
+
+export function* watch_Doc_Danh_sach_Nguoi_dung() {
+    yield takeLatest(DOC_DANH_SACH_NGUOI_DUNG, Doc_Danh_sach_Nguoi_dung);
+} 
+
+
+
+
+
+ - rootSaga.js
+
+// saga effect
+import { fork, all } from 'redux-saga/effects';
+import { watchIncrement, watchDecrement } from './counterSagas';
+import { watch_Doc_Danh_sach_Nguoi_dung} from './Nguoi_dung_Saga'; // add
+export default function* rootSaga() {
+    // Thực thi nhiều saga
+    // yield: chạy tuần tự từng saga	 
+    yield all([
+        watchIncrement(),
+        watchDecrement(),
+        watch_Doc_Danh_sach_Nguoi_dung() // add
+        
+    ]
+    )
+}
+
+----------------------------------------------------------
+
+store.js
+
+import CounterContainer from './containers/CounterContainer';
+import Tim_Danh_sach_Nguoi_dung_Container from './containers/Tim_Danh_sach_Nguoi_dung_Container'; // add
+import { createStore,applyMiddleware } from 'redux';
+import { Provider } from 'react-redux';
+import allReducers from './reducers'
+
+//Redux saga
+import createSagaMiddleware from 'redux-saga';
+import rootSaga from './sagas/rootSaga'
+//Middleware
+const sagaMiddleware=createSagaMiddleware();
+//Từ applyMiddleware vào Reducers thì tạo một store, sagaMiddleware nằm giữa Action và Reducers
+let store =createStore(allReducers, applyMiddleware(sagaMiddleware));
+const App = () => (
+    <Provider store={store}>
+        {/* <CounterContainer /> */}
+        <Tim_Danh_sach_Nguoi_dung_Container />
+
+    </Provider>
+)
+
+sagaMiddleware.run(rootSaga); //Chạy xuyên suốt các hàm rootSaga trong app
+
+

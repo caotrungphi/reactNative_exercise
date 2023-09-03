@@ -1,0 +1,225 @@
+﻿Nguyên tắc của Redux
+- Single source of truth: State của toàn bộ ứng dụng được lưu trong trong 1 store duy nhất là 1 Object mô hình tree.
+- State is read-only: Chỉ có 1 cách duy nhất để thay đổi state đó là tạo ra một action (là 1 object mô tả những gì xảy ra)
+- Changes are made with pure functions: Để chỉ rõ state tree được thay đổi bởi 1 action bạn phải viết pure reducers
+
+Nguyên tắc vận hành
+
+1 - Actions
+
+Trong Redux action là 1 pure object định nghĩa 2 thuộc tính là : type: kiểu mô tả action và payload: giá trị tham số truyền lên
+{
+  type: "KIEU_ACTION",
+  payload: //tham số
+}
+
+2 - Reducers
+
+Action có nhiệm vụ mô tả những gì xảy ra nhưng lại không chỉ rõ phần state nào của response thay đổi 
+-> Việc này sẽ là của Reducer đảm nhiệm:
+Reducer nhận 2 tham số vào: 1 state cũ và action được gửi lên sau đó trả ra một state mới, ko làm thay đổi state cũ.
+
+(previousState, action) => newState
+
+3- Store
+
+Store là 1 object lưu trữ state của toàn bộ ứng dụng có 3 phương thức sau:
+
+	- getState(): Giúp lấy ra state hiện tại
+	- dispatch(action): Thực hiện gọi 1 action
+	- subscrible(listener):Nó có vai trò cực quan trọng, luôn luôn lắng nghe xem có thay đổi gì ko rồi ngay lập tức cập nhật ra View
+---------------------------------------------------------------------
+--------------------------------------------------------------------------
+
+action -> reducer -> store -> view
+
+Có mấy nguyên tắc bạn cần nhớ về Redux như sau:
+
+*Redux sử dụng kiến trúc 1 chiều, tức là nó có flow như bên trên, chỉ vòng vòng 1 chiều như vậy, action -> reducer -> store -> view.
+
+*State của toàn bộ ứng dụng được lưu trong trong 1 store duy nhất là 1 Object mô hình tree: Single source of truth.
+
+*Redux state là READ-ONLY: bạn không thể thay đổi trực tiếp state được, chỉ có 1 cách duy nhất để update state là phải dispatch một action (là một js object).
+
+*Những thay đổi của redux state được thực hiện bởi Pure functions (reducer).
+
+--------------------------------------------------------------------------------
+
+------------------------ Hướng dẫn xây dựng redux : màn hình đếm (tăng/giảm) theo trị
+
+
+Cài đặt các thành phần cho ứng dụng
+
+	npm install redux --save
+	npm install react-redux --save
+	npm i react-native-button --s
+---------------------------------------------
+Bước 1: Định nghĩa các hành động
+Trong ứng dụng tạo thư mục actions:
+ - actionTypes.js
+
+export const INCREMENT ='INCREMENT';
+export const DECREMENT ='DECREMENT';
+
+ - index.js
+
+import {INCREMENT, DECREMENT} from './actionTypes';
+
+export const incrementAction = (step) =>{
+    return {
+        type: INCREMENT,        
+        step: step     
+    }
+}
+
+export const decrementAction = (step) =>{
+    return {
+        type: DECREMENT,        
+        step: step     
+    }
+}
+------------------------------------------------
+Bước 2: 
+Trong ứng dụng tạo thư mục: reducers:
+ - counterReducers.js
+import {INCREMENT, DECREMENT} from '../actions/actionTypes';
+
+const counterReducers = (times = 0, action) => {
+    switch(action.type){
+        case INCREMENT:
+            return ++times;
+        case DECREMENT:
+            return --times;
+        default:
+            return times;
+    }
+}
+export default counterReducers;
+
+ - index.js
+import {combineReducers} from 'redux'
+import counterReducers from './counterReducers';
+
+
+const allReducers = combineReducers({
+    counterReducers,
+    
+})
+
+export default allReducers;
+------------------------------------------------
+Bước 3: tạo view và liên kết sự kiện gọi các actions 
+Trong ứng dụng tạo thư mục: components:
+ - CounterComponent.js
+import React, {Component} from 'react';
+import {StyleSheet, Text, View} from 'react-native';
+import Button from 'react-native-button';
+
+export default class CounterComponent extends Component{
+    constructor(props){
+        super(props)
+    }
+    render(){
+        return(
+            <View style={styles.container}>
+                <Text style = {styles.text} >{this.props.times}</Text>
+                <View style={{flexDirection:'row'}}>
+                    <Button style={{fontSize:16, color:'#ffffff'}}
+                            containerStyle={{
+                                            width:100, padding:8, marginLeft:20, 
+                                            marginRight:20, height:38, 
+                                            borderRadius:5, backgroundColor:'#4387fd', marginTop:10}}
+                            onPress={()=>{this.props.onIncrement(1)}}
+                                            >
+                            Tăng
+                    </Button>
+                    <Button style={{fontSize:16, color:'#ffffff'}}
+                            containerStyle={{
+                                             width:100, padding:8, marginLeft:10, 
+                                            marginRight:10, height:38, 
+                                            borderRadius:5, backgroundColor:'#4387fd', marginTop:10}}
+                            onPress={()=>{this.props.onDecrement(1)}}
+                                            >
+                            Giảm
+                    </Button>
+                </View>
+            </View>
+        );
+    }
+}
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#ffffff',
+    },   
+    text: {
+        fontSize: 200,
+        color: '#4387fd'
+    } 
+});
+---------------------------------------------------------------
+Bước 4: component muốn truy cập state hay gửi action đến store thì phải tự khai báo qua phương thức connect
+Trong ứng dụng tạo thư mục: containers:
+ - CounterContainer.js
+import {connect} from 'react-redux';
+
+import CounterComponent from '../components/CounterComponent';
+
+import {incrementAction, decrementAction} from '../actions';
+
+const mapStateToProps = state =>{
+    return {
+        times: state.counterReducers? state.counterReducers:0
+    }
+}
+const mapDispatchToProps = dispatch =>{
+    return {
+        onIncrement: (step)=>{
+            dispatch(incrementAction(step));
+        },
+        onDecrement: (step)=>{
+            dispatch(decrementAction(step));
+        }
+    }
+}
+const CounterContainer= connect(mapStateToProps,mapDispatchToProps)(CounterComponent);
+export default CounterContainer;
+--------------------------------------------------
+
+Bước 5: Provider component: là thành phần bao bên ngoài components tree. Giúp các components kết nối với store 
+
+store.js (components06)
+
+import CounterContainer from './containers/CounterContainer';
+import { legacy_createStore as createStore } from 'redux';
+import {Provider} from 'react-redux';
+
+import allReducers from './reducers'
+
+let store =createStore(allReducers); // Tạo store
+const Store =() =>(
+        <Provider store={store}>
+            <CounterContainer/>
+        </Provider>
+    ) 
+
+export default Store;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,120 @@
+-----------------------------------Tham khảo
+https://redux-saga.js.org
+https://developer.mozilla.org/vi/docs/Web/JavaScript/Reference/Statements/function*
+===========================================
+Redux-Saga là gì?
+Redux-Saga là một thư viện redux middleware, giúp quản lý những side effect trong ứng dụng redux trở nên đơn giản hơn. 
+Bằng việc sử dụng tối đa tính năng Generators (function*) của ES6, nó cho phép ta viết async code nhìn giống như là synchronos.
+--------------------------------
+Side effect là gì??
+Ta đã biết tất cả những xử lý ở REDUCER đều phải là synchronous và pure tức chỉ là xử lý đồng bộ. 
+Nhưng trong ứng dụng thực tế thì cần nhiều hơn vậy ví dụ như asynchronous (thực hiện một số việc như gọi một hàm AJAX để fetch dữ liệu về nhưng cần đợi kết quả chứ kết quả không trả về ngay được) hoặc là impure (thực hiện lưu, đọc dữ liệu ra bên ngoài như lưu dữ liệu ra ổ cứng hay đọc cookie từ trình duyệt… đều cần đợi kết quả). Những việc như thế trong lập trình hàm gọi nó là side effects.
+--------------------------------
+Generator function là gì??
+Khác với function bình thường là thực thi và trả về kết quả, thì Generator function có thể thực thi, tạm dừng trả về kết quả và thực thi bằng tiếp. Từ khóa để làm được việc đấy là “YIELD”. Generator được đưa ra cách đây mấy chục năm nhưng đến ES2015 mới được bổ sung, các ngôn ngữ khác đã được bổ sung tính năng này như C#, PHP, Ruby, C++, R…
+--------------------------------
+Redux-Saga hoạt động như thế nào??
+Đối với logic của saga, ta cung cấp một hàm cho saga, 
+chính hàm này là hàm đứng ra xem xét các action trước khi vào store, 
+nếu là action quan tâm thì nó sẽ thực thi hàm sẽ được thực thi, 
+nếu bạn biết khái niệm hook thì hàm cung cấp cho saga chính là hàm hook. 
+Điều đặc biệt của hàm hook này nó là một generator function, 
+trong generator function này có yield và mỗi khi yield ta sẽ trả về một plain object. 
+Object trả về đó được gọi Effect object.
+effect object này đơn giản chỉ là một object bình thường nhưng chứa thông tin đặc biệt dùng để chỉ dẫn middleware của Redux thực thi các hoạt động khác
+ví dụ như gọi một hàm async khác hay put một action tới store. Để tạo ra effect object đề cập ở trên thì ta gọi hàm từ thư viện của saga là redux-saga/effects.
+----------------------------------------------------
+Các phương thức trong Saga
+	- put(): gửi 1 action đến store
+	- fork(): thực thi 1 hàm saga theo cơ chế none-blocking (Async)
+	- call(): thực thi 1 hàm saga theo cơ chế blocking (Sync)
+	- all(): thực thi nhiều hàm saga cùng lúc
+	- takeEvery(): thực thi và trả lại kết quả của mọi actions được gọi.
+	- takeLastEvery(): thực hiện một loạt các actions, nó sẽ chỉ thực thi và trả lại kết quả của của actions cuối cùng.
+	- take() : tạm dừng cho đến khi nhận được action.
+	- race() : chạy nhiều effect đồng thời, tuy nhiên chỉ lấy kết quả của effect nhanh nhất, và hủy kết quả của những effect còn lại.
+		Các bạn có thể hình dung như một cuộc đua, và nó chỉ qua tâm đến người thắng cuộc.
+===============================================================
+
+Tạo components07
+----------------------------------Hướng dẫn Bài tập Counter Middleware và Redux-Saga   
+Cài đặt cho ứng dụng
+npm i redux-saga --s *
+--------------------------------------------------
+Sử dụng lại các thư mục trong components06 cho components07
+
+Trong components07 tạo thư mục: sagas
+ - counterSagas.js
+import {INCREMENT, DECREMENT} from '../actions/actionTypes';
+//takeEvery khi thực hiện một hành động nào đó nó sẽ gọi một hàm trước khi dispatch vào reducers
+import {put, takeEvery} from 'redux-saga/effects';
+// Định nghĩa các hàm redux-saga: function* funcName(){} -> nó là một saga
+export function* increment(){
+    console.log('Đây là increment saga');
+}
+// Xây dựng hàm watchIncrement: khi một action gọi (INCREMENT của redux) thì hàm increment của saga sẽ được gọi trước  
+// yield: chạy tuần tự
+// takeEvery: đăng ký action cho saga
+export function* watchIncrement(){
+    yield takeEvery(INCREMENT, increment);
+}
+
+export function* decrement(){
+    console.log('Đây là decrement saga');
+}
+
+export function* watchDecrement(){
+    yield takeEvery(DECREMENT, decrement);
+}
+-------------------------------------------------------------
+ - rootSaga.js // -> quản lý các saga
+// saga effect
+import {fork, all} from 'redux-saga/effects';
+import {watchIncrement, watchDecrement} from './counterSagas';
+export default function* rootSaga(){
+    // Thực thi nhiều saga
+    // yield: chạy tuần tự từng saga	 
+    yield all([
+        watchIncrement(),
+        watchDecrement(),
+        
+    ]
+    )
+}
+--------------------------------------------------------------------
+store.js khai báo và thực thi saga
+
+import CounterContainer from './containers/CounterContainer';
+import {legacy_createStore as createStore, applyMiddleware } from 'redux'; // add -> applyMiddleware 
+import {Provider} from 'react-redux';
+import allReducers from './reducers'
+
+//Khai báo Redux saga
+
+import createSagaMiddleware from 'redux-saga';
+import rootSaga from './sagas/rootSaga'
+//Middleware
+const sagaMiddleware=createSagaMiddleware();
+
+//Từ applyMiddleware vào Reducers thì tạo một store, sagaMiddleware nằm giữa Action và Reducers
+let store =createStore(allReducers, applyMiddleware(sagaMiddleware));
+const Store = () => (
+    <Provider store={store}>
+        <CounterContainer />
+    </Provider>
+)
+
+sagaMiddleware.run(rootSaga); //Chạy xuyên suốt các hàm rootSaga trong app
+export default Store
+----> xem cửa sổ node server
+===================================================================
+
+
+
+
+
+ 
+
+
+
+

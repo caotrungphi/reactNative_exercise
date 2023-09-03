@@ -1,0 +1,4 @@
+export const INCREMENT ='INCREMENT';
+export const DECREMENT ='DECREMENT';
+export const CAU_CHAO ='CAU_CHAO';
+export const DOC_DANH_SACH_NGUOI_DUNG ='DOC_DANH_SACH_NGUOI_DUNG';

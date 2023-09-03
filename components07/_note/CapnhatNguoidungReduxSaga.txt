@@ -1,0 +1,453 @@
+------------------- 7.2 Xây dựng màn hình Cập nhật người dùng--------------------------------------------------------------
+Cài đặt cho ứng dụng
+npm i react-native-modalbox --s
+
+----------------------------------------------
+
+Trong thư mục actions
+ - actionTypes.js
+
+export const THEM_NGUOI_DUNG ='THEM_NGUOI_DUNG'; // add
+
+ - index.js
+
+import {THEM_NGUOI_DUNG, ...} from './actionTypes';
+
+export const Them_Nguoi_dung_Action = (Nguoi_dung) =>{
+    return {
+        type: THEM_NGUOI_DUNG,        
+        Nguoi_dung: Nguoi_dung     
+    }
+}
+
+----------------------------------------------
+
+Trong thư mục components
+ - Tạo mới tập tin: Danh_sach_Nguoi_dung_Component.js
+
+import React,{Component} from 'react';
+import {View, Text,Image, FlatList, TouchableOpacity, StyleSheet} from 'react-native';
+import Them_Nguoi_dung from './Them_Nguoi_dung_Component'
+
+class Nguoi_dung extends Component{ 
+    constructor(props){
+        super(props);          
+    }        
+    render(){
+        return(
+            <View style={{flex:1, flexDirection:"column"}}>
+                <View style={{flex:1, flexDirection:"row"}}>
+                    <Image 
+                        style={{height:30,width:30, margin:10, borderRadius:20}} 
+                        source={require('../images/avatar-40.png')}>
+                    </Image>
+                    <View style={{flex:1,justifyContent:'center', height:50}}>
+                        <Text style={styles.itemText}>{this.props.item.Ho_ten}</Text> 
+                    </View>  
+                    <View style={{justifyContent:'center', height:50}}>
+                        <TouchableOpacity 
+                            //onPress={this.Cap_nhat_Nguoi_dung.bind(this)} 
+                            activeOpacity={0.5}>
+                            <Image 
+                                style={{height:20,width:20, margin:5, tintColor:'#A7A7A7'}} 
+                                source={require('../images/edit-32.png')}>      
+                            </Image> 
+                        </TouchableOpacity>  
+                    </View>
+                    <View style={{justifyContent:'center', height:50}}>
+                        <TouchableOpacity 
+                            //onPress={this.Xoa_Nguoi_dung.bind(this)} 
+                            activeOpacity={0.5}>
+                            <Image 
+                                style={{height:20,width:20, margin:5, tintColor:'#A7A7A7'}} 
+                                source={require('../images/trash-32.png')}>      
+                            </Image>   
+                        </TouchableOpacity>
+                    </View>                     
+                </View>
+                <View style={{height:1, backgroundColor:"#e6e5e5"}}></View>
+            </View>
+        );
+    }
+}
+
+export default class Danh_sach_Nguoi_dung extends Component{   
+    constructor(props){
+        super(props);           
+    }        
+    Them_Nguoi_dung(){
+        this.refs.Th_Them.Mo_Hop_thoai();
+    }
+    componentDidMount(){
+        this.props.onDocDanhSach('');
+    }
+    render(){        
+        return (
+            <View style={{flex:1}}>
+                <View style={styles.inputContainer}>
+                    <Text style={styles.text}>Danh sách Người dùng</Text>
+                    <TouchableOpacity onPress={this.Them_Nguoi_dung.bind(this)} activeOpacity={0.5}>
+                        <Image style={styles.inputIcon} source={require('../images/plus-32.png')}/>
+                    </TouchableOpacity>
+                </View>
+                <FlatList
+                    ref={'Th_Danh_sach'} 
+                    data={this.props.Danh_sach} 
+                    extraData={this.props.Danh_sach}
+                    keyExtractor={(item) => item.Ma_so} 
+                    renderItem={({item, index})=>{
+                        return(
+                            <Nguoi_dung item={item} index={index} parentFlatList={this}>
+                            </Nguoi_dung>
+                        );
+                    }}>
+                </FlatList>        
+                <Them_Nguoi_dung ref={'Th_Them'} parentFlatList={this}></Them_Nguoi_dung>
+            </View>
+        );
+    }
+}
+
+const styles= StyleSheet.create({
+    itemText:{
+        color:"#000000",
+        padding:5,
+        fontSize:14
+    },
+    itemDate:{
+        color:"#000000",
+        padding:5,
+        paddingTop:0,
+        fontSize:12,
+        fontStyle:'italic'
+    },
+    inputContainer: {
+        borderColor: '#b9b7b7',
+        backgroundColor: '#4387fd',
+        borderBottomWidth: 1,
+        height:50,
+        flexDirection: 'row',
+        alignItems:'center',               
+    },
+    text:{
+        marginRight:5, 
+        borderBottomColor: '#FFFFFF', 
+        flex:1, 
+        color:'#ffffff', 
+        fontSize:18, 
+        textAlign:'center', 
+        justifyContent:'center'  
+    },
+    inputIcon:{
+        width:26,
+        height:26,
+        tintColor:'#ffffff',
+        marginRight:5,
+        justifyContent: 'center'
+    }
+})
+
+ - Tạo mới tập tin: Them_Nguoi_dung_Component.js
+
+import React,{Component} from 'react';
+import {Text,TextInput, Dimensions,Platform} from 'react-native';
+import Modal from 'react-native-modalbox';
+import Button from 'react-native-button';
+
+const { width, height } = Dimensions.get('window');
+export default class Them_Nguoi_dung extends Component{   
+    constructor(props){
+        super(props);
+        this.state = {            
+            Ma_so:'',
+            Ho_ten:''
+        };
+    }
+    Mo_Hop_thoai(){
+        this.setState(
+            {                
+                Ma_so:'',
+                Ho_ten:''
+            }
+        )
+        this.refs.Th_Hop_thoai.open();
+    }
+    Xu_ly_Them(){
+        if(this.state.Ma_so=='' || this.state.Ho_ten==''){
+            alert('Bạn phải nhập đầy đủ thông tin');
+            return;
+        }
+        let Nguoi_dung={
+            Ma_so: this.state.Ma_so,
+            Ho_ten:this.state.Ho_ten,
+            Ten_Dang_nhap: this.state.Ma_so,
+            Mat_khau: this.state.Ma_so,
+            Nhom_Nguoi_dung : {
+                Ten : "Nhân viên Bán hàng",
+                Ma_so : "NHAN_VIEN_BAN_HANG"
+            }
+        }
+        this.props.parentFlatList.props.onThem(Nguoi_dung);
+        this.refs.Th_Hop_thoai.close();
+         
+    }
+    render(){        
+        return (
+            <Modal ref={'Th_Hop_thoai'} style={{
+                borderRadius: Platform.OS==='ios'?20:6,
+                shadowRadius: 10,
+                width:width - 80,
+                height:240
+            }} 
+            position='center'
+            backdrop={true}                
+        >
+            <Text style={{
+                        fontSize:20, textAlign:'center', 
+                        marginTop:25,marginBottom:20, color:'#4387fd'}}>
+                Thông tin Người dùng
+            </Text>
+            <TextInput  style={{
+                                height:40, borderBottomColor:'#e6e5e5',
+                                fontSize:14, borderBottomWidth:1, 
+                                marginBottom:10, marginLeft:20, marginRight:20}} 
+                        placeholder='Mã số' 
+                        value={this.state.Ma_so}
+                        onChangeText={(value) => {this.setState({Ma_so:value})}}
+            >
+            </TextInput>
+            <TextInput  style={{
+                                height:40, borderBottomColor:'#e6e5e5',
+                                fontSize:14, borderBottomWidth:1, 
+                                marginBottom:10, marginLeft:20, marginRight:20}} 
+                        placeholder='Họ tên' 
+                        value={this.state.Ho_ten}
+                        onChangeText={(value) => {this.setState({Ho_ten:value})}}
+            >
+            </TextInput>
+            <Button style={{fontSize:16, color:'#ffffff'}}
+                    containerStyle={{
+                                    padding:6, marginLeft:100, 
+                                    marginRight:100, height:38, 
+                                    borderRadius:5, backgroundColor:'#4387fd', marginTop:10}}
+                    onPress={this.Xu_ly_Them.bind(this)}
+            >
+                    Đồng ý
+            </Button>
+        </Modal>
+
+        );
+    }
+}
+
+---------------------------------------------------
+
+Trong thư mục containers
+
+ - Tạo mới tập tin: Danh_sach_Nguoi_dung_Container.js
+
+import {connect} from 'react-redux';
+import Danh_sach_Nguoi_dung from '../components/Danh_sach_Nguoi_dung_Component';
+import {Them_Nguoi_dung_Action, Doc_Danh_sach_Nguoi_dung_Action} from '../actions';
+
+const mapStateToProps = state =>{
+    console.log(state);
+    return {
+        Danh_sach: state.Nguoi_dung_Reducers? state.Nguoi_dung_Reducers:[]
+    }
+}
+const mapDispatchToProps = dispatch =>{
+    return {
+        onDocDanhSach: (Gia_tri_tim)=>{
+            dispatch(Doc_Danh_sach_Nguoi_dung_Action(Gia_tri_tim));
+        },
+        onThem: (Nguoi_dung)=>{
+            dispatch(Them_Nguoi_dung_Action(Nguoi_dung));
+        }
+    }
+}
+const Danh_sach_Nguoi_dung_Container= connect(mapStateToProps,mapDispatchToProps)(Danh_sach_Nguoi_dung);
+export default Danh_sach_Nguoi_dung_Container;
+
+-----------------------------------------------------------------
+
+Trong thư mục reducers
+
+ - Nguoi_dung_Reducers.js
+
+import { THEM_NGUOI_DUNG, DOC_DANH_SACH_NGUOI_DUNG, DOC_DANH_SACH_NGUOI_DUNG_THANH_CONG, DOC_DANH_SACH_NGUOI_DUNG_THAT_BAI } from '../actions/actionTypes';
+const Nguoi_dung_Reducers = (Danh_sach_Nguoi_dung = [], action) => {
+    switch (action.type) {
+        case DOC_DANH_SACH_NGUOI_DUNG_THANH_CONG:
+            return action.Danh_sach_Nguoi_dung;
+        case DOC_DANH_SACH_NGUOI_DUNG_THAT_BAI:
+            return [];
+        
+        case THEM_NGUOI_DUNG:
+            return [
+                ...Danh_sach_Nguoi_dung,
+                action.Nguoi_dung
+            ] 
+        /*
+        case CAP_NHAT_NGUOI_DUNG:
+            return Danh_sach_Nguoi_dung.map(Nguoi_dung=>{
+                (Nguoi_dung.Ma_so===action.Nguoi_dung.Ma_so)
+                ? {...Nguoi_dung, Ho_ten:action.Nguoi_dung.Ho_ten}
+                : Nguoi_dung
+            })
+        case XOA_NGUOI_DUNG:
+            return Danh_sach_Nguoi_dung.filter(Nguoi_dung=>{
+                return Nguoi_dung.Ma_so!==action.Ma_so
+            })
+        */
+        default:
+            return Danh_sach_Nguoi_dung;
+
+    }
+}
+export default Nguoi_dung_Reducers;
+
+ - index.js
+
+import {combineReducers} from 'redux'
+import counterReducers from './counterReducers';
+import Nguoi_dung_Reducers from './Nguoi_dung_Reducers';
+
+const allReducers = combineReducers({
+    counterReducers,
+    Nguoi_dung_Reducers
+})
+
+export default allReducers;
+
+-------------------------------------------------
+
+Trong thư mục sagas
+
+ - Nguoi_dung_Saga.js
+
+import { THEM_NGUOI_DUNG, .... } from '../actions/actionTypes';
+
+export function* Them_Nguoi_dung(action) {
+
+    try {
+        const Ket_qua = yield Api.Them_Nguoi_dung(action.Nguoi_dung);
+        if (Ket_qua === true)
+            yield put({ type: DOC_DANH_SACH_NGUOI_DUNG_THANH_CONG });
+    }
+    catch (Loi) {
+
+    }
+}
+
+export function* watch_Them_Nguoi_dung() {
+    yield takeLatest(THEM_NGUOI_DUNG, Them_Nguoi_dung);
+}
+
+ - rootSaga.js
+
+// saga effect
+import { fork, all } from 'redux-saga/effects';
+import { watchIncrement, watchDecrement } from './counterSagas';
+import { watch_Doc_Danh_sach_Nguoi_dung, watch_Them_Nguoi_dung } from './Nguoi_dung_Saga';
+export default function* rootSaga() {
+    // Thực thi nhiều saga
+    // yield: chạy tuần tự từng saga	 
+    yield all([
+        watchIncrement(),
+        watchDecrement(),
+        watch_Doc_Danh_sach_Nguoi_dung(),
+        watch_Them_Nguoi_dung() // add
+    ]
+    )
+}
+
+Api.js
+
+const url_Them_Nguoi_dung='https://servicedatajs.herokuapp.com/Them_Nguoi_dung'
+function* Them_Nguoi_dung(Nguoi_dung){
+    const Dap_ung = yield fetch(url_Them_Nguoi_dung, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body:JSON.stringify(Nguoi_dung),
+    });
+    const Ket_qua= yield (Dap_ung.status===200);
+    return Ket_qua;
+} 
+
+
+export const Api = {
+    Doc_Danh_sach_Nguoi_dung,
+    Them_Nguoi_dung
+}
+------------------------------------------------------------------
+
+index.js (Gốc)
+
+import Danh_sach_Nguoi_dung from './containers/Danh_sach_Nguoi_dung_Container';
+
+const App = () => (
+    <Provider store={store}>
+        {/* <CounterContainer /> */}
+        {/* <Tim_Danh_sach_Nguoi_dung/> */}
+        <Danh_sach_Nguoi_dung/>
+    </Provider>
+)
+
+=========================================================================
+Cập nhật Người dùng
+https://servicedatajs.herokuapp.com/Cap_nhat_Nguoi_dung
+
+sagas/Api.js
+const url_Cap_nhat_Nguoi_dung='https://servicedatajs.herokuapp.com/Cap_nhat_Nguoi_dung'
+function* Cap_nhat_Nguoi_dung(Nguoi_dung){
+    const Dap_ung = yield fetch(url_Cap_nhat_Nguoi_dung, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body:JSON.stringify(Nguoi_dung),
+    });
+    const Ket_qua= yield (Dap_ung.status===200);
+    return Ket_qua;
+}
+
+
+export const Api = {
+    Doc_Danh_sach_Nguoi_dung,
+    Them_Nguoi_dung,
+    Cap_nhat_Nguoi_dung
+}
+-------------------------------------------------------------------------------
+actions/actionTypes.js
+export const CAP_NHAT_NGUOI_DUNG ='CAP_NHAT_NGUOI_DUNG';
+actions/index.js
+import {CAP_NHAT_NGUOI_DUNG} from './actionTypes';
+export const Cap_nhat_Nguoi_dung_Action = (Nguoi_dung) =>{
+    return {
+        type: CAP_NHAT_NGUOI_DUNG,        
+        Nguoi_dung: Nguoi_dung     
+    }
+}
+----------------------------------------------------------------------------------
+containers/Danh_sach_Nguoi_dung_Container.js
+import {Cap_nhat_Nguoi_dung_Action, Them_Nguoi_dung_Action, Doc_Danh_sach_Nguoi_dung_Action} from '../actions';
+const mapDispatchToProps = dispatch =>{
+    return {
+        onDocDanhSach: (Gia_tri_tim)=>{
+            dispatch(Doc_Danh_sach_Nguoi_dung_Action(Gia_tri_tim));
+        },
+        onThem: (Nguoi_dung)=>{
+            dispatch(Them_Nguoi_dung_Action(Nguoi_dung));
+        },
+        onCapnhat: (Nguoi_dung)=>{
+            dispatch(Cap_nhat_Nguoi_dung_Action(Nguoi_dung));
+        }
+    }
+}
+---------------------------------------------------------------------------------------
+reducers/Nguoi_dung_Reducers.js
